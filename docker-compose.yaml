@@ -1,0 +1,49 @@
+services:
+  nginx:
+    image: nginx:1.25
+    container_name: nginx
+    restart: always
+    ports:
+      - "8001:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./MyMarket:/var/www/backend
+    depends_on:
+      - backend
+
+
+  backend:
+    build:
+      context: ./MyMarket
+      dockerfile: Dockerfile
+    image: mymarketproject-backend
+    container_name: laravel
+    restart: always
+    volumes:
+      - ./MyMarket:/var/www/backend:rw
+    environment:
+      - DB_HOST=mydresswat-db.c9wqqssc0zol.eu-central-1.rds.amazonaws.com
+      - DB_PORT=3306
+      - DB_DATABASE=mydressway
+      - DB_USERNAME=admin
+      - DB_PASSWORD=Levani2004#
+#     depends_on:
+#       - mysql
+
+    
+#   mysql:
+#     image: mysql:8.0
+#     container_name: mysql
+#     restart: always
+#     environment:
+#       MYSQL_ROOT_PASSWORD: rootpassword
+#       MYSQL_DATABASE: laravel_db
+#       MYSQL_USER: rootuser
+#       MYSQL_PASSWORD: rootpassword
+#     ports:
+#       - "3306:3306"
+#     volumes:
+#       - mysql_data:/var/lib/mysql
+
+# volumes:
+#   mysql_data:
