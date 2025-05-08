@@ -33,7 +33,7 @@ Route::get('/similar/{id}/products', [ProductController::class, 'similarproducts
 Route::post('/Search', [ProductController::class, 'filterbyname']);
 Route::get('/Searchcategory/{id}', [ProductController::class, 'filterbycategory']);
 
-Route::group(['middleware' => ['auth:sanctum', 'adminpanel']], function () {
+Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/admindisplay', [ProductController::class, 'admindisplay']);
     Route::post('/addproduct', [ProductController::class, 'create']);
     Route::post('/notactive/{id}', [ProductController::class, 'notactive']);

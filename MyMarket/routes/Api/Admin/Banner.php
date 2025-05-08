@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => '/banner'], function () {
-    Route::group(['middleware' => ['adminpanel', 'auth:sanctum'], 'prefix' => "/admin"], function () {
+    Route::group(['middleware' => ['auth:sanctum'], 'prefix' => "/admin"], function () {
         Route::post('/create', [BannerController::class, 'create']);
         Route::delete('/delete/{id}', [BannerController::class, 'delete']);
         Route::get('/display', [BannerController::class, 'admindisplay']);

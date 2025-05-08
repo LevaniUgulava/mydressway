@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::group(['prefix' => 'admin/collection', 'middleware' => ['adminpanel', 'auth:sanctum']], function () {
+Route::group(['prefix' => 'admin/collection', 'middleware' => [ 'auth:sanctum']], function () {
 
     Route::post('/create', [CollectionController::class, 'create']);
     Route::post('/delete/{collection}', [CollectionController::class, 'deletecollection']);
@@ -30,7 +30,7 @@ Route::group(['prefix' => 'admin/collection', 'middleware' => ['adminpanel', 'au
     Route::post('/addtocollection/{collection}/product/{product}', [CollectionController::class, 'addtocollection']);
     Route::get('/display/products/{collection}', [CollectionController::class, 'allProductsForCollection']);
 });
-Route::group(['prefix' => 'admin/brand', 'middleware' => ['adminpanel', 'auth:sanctum']], function () {
+Route::group(['prefix' => 'admin/brand', 'middleware' => ['auth:sanctum']], function () {
     Route::get('/display', [BrandController::class, 'admindisplay']);
     Route::get('/display/{id}', [BrandController::class, 'displaybyid']);
     Route::post('/create', [BrandController::class, 'create']);
