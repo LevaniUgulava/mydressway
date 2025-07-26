@@ -23,6 +23,7 @@ return new class extends Migration
             $table->unsignedBigInteger('category_id');
             $table->unsignedBigInteger('subcategory_id')->nullable();
             $table->json("additionalinfo")->nullable();
+            $table->string('slug')->unique();
             $table->boolean('active')->default(1);
 
 

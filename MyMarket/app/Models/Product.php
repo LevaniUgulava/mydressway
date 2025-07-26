@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Illuminate\Support\Str;
 
 // #[ObservedBy([ProductLoggerObserver::class])]
 
@@ -144,6 +145,19 @@ class Product extends Model implements HasMedia
     {
         return $this->belongsTo(Maincategory::class);
     }
+
+
+
+    public static function boot()
+    {
+        parent::boot();
+        static::saving(function ($product) {
+            if ($product->isDirty('name')) {
+                $product->slug = Str::slug($product->name);
+            }
+        });
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

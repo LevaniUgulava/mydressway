@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::post('/register', [AuthController::class, 'register']);
+Route::get('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminlogin'])->name('admin.login');
 Route::post('auth/facebook', [FacebookController::class, 'authenticate']);

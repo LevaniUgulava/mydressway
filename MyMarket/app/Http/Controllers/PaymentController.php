@@ -70,16 +70,11 @@ class PaymentController extends Controller
     }
     public function getTemporder(Request $request)
     {
-        $user = auth('sanctum')->user();
-        $guestToken = $request->header("Guest-Token");
+        $user = auth()->user();
 
         if ($user) {
             $tempOrders = TemporaryOrder::Where("user_id", $user->id)
                 ->get();
-        } elseif ($guestToken) {
-            $tempOrders = TemporaryOrder::where("guest_token", $guestToken)->get();
-        } else {
-            return response()->json(['error' => 'User or guest token is required'], 400);
         }
 
         return response()->json($tempOrders);
@@ -108,12 +103,13 @@ class PaymentController extends Controller
 
     public function checkout(Request $request)
     {
+        $user = Auth::user();
+
         $request->validate([
-            'address' => 'required|string|max:100',
             'phone' => 'nullable|regex:/^[1-9][0-9]{8}$/',
             'firstname' => 'nullable|string|max:100',
+            'address_id' => 'required',
             'lastname' => 'nullable|string|max:100',
-            'town' => 'required|string|max:100',
             'products' => 'required|array',
             'products.*.product_id' => 'nullable|integer',
             'products.*.quantity' => 'required|integer|min:1',
@@ -122,26 +118,25 @@ class PaymentController extends Controller
             'products.*.retail_price' => 'required|numeric',
             'products.*.total_price' => 'required|numeric',
         ]);
-        $address = $request->input('address');
-        $number = $request->input('phone');
         $firstname = $request->input('firstname');
         $lastname = $request->input('lastname');
-        $town = $request->input('town');
-        $user = auth('sanctum')->user();
+        $number = $request->input('phone');
+        $address_id = $request->input('address_id');
         $gets = collect($request->input('products'));
         $price = 0;
+
         foreach ($gets as $get) {
             $price += $get['total_price'];
         }
         $order = Order::create([
-            'user_id' => $user->id ?? null,
+            'user_id' => $user->id,
             'amount_paid' => $price,
+            'address_id' => $address_id,
             'status' => Status::Pending,
-            'fullname' => $firstname . " " . $lastname ?? null,
-            'town' => $town,
+            'fullname' => $firstname . " " . $lastname,
             "number" => $number,
-            'address' => $address,
         ]);
+
 
         if ($order) {
 

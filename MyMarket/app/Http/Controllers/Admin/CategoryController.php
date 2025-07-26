@@ -18,16 +18,18 @@ class CategoryController extends Controller
 {
     public function displaymain()
     {
-        $maincategory = Maincategory::with('Categories')->select('id', 'name')->get();
+        $maincategory = Maincategory::with('Categories')->select('id', 'ka_name', 'en_name')->get();
 
         $mappedmaincategory = $maincategory->map(function ($category) {
             return [
                 "id" => $category->id,
-                "name" => $category->name,
+                "ka_name" => $category->ka_name,
+                "en_name" => $category->en_name,
+
                 "categories" => $category->categories->map(function ($category) {
                     return [
                         "id" => $category->id,
-                        "name" => $category->name,
+                        "name" => $category->ka_name,
                     ];
                 })
             ];
@@ -69,12 +71,13 @@ class CategoryController extends Controller
     {
         $categories = Category::with(['Maincategories' => function ($query) {
             $query->select('maincategories.id');
-        }])->select("id", "name")->get();
+        }])->select("id", "ka_name", "en_name")->get();
 
         $mappedcategory = $categories->map(function ($category) {
             return [
                 "id" => $category->id,
-                "name" => $category->name,
+                "ka_name" => $category->ka_name,
+                "en_name" => $category->en_name,
                 "maincategory_id" => $category->maincategories->pluck("id")->toArray(),
 
             ];
@@ -85,17 +88,18 @@ class CategoryController extends Controller
     public function displayadmincategory()
     {
         $categories = Category::with(['Subcategories' => function ($query) {
-            $query->select('subcategories.id', 'subcategories.name');
-        }])->select('id', 'name')->get();
+            $query->select('subcategories.id', 'subcategories.ka_name');
+        }])->select('id', 'ka_name', 'en_name')->get();
 
         $mappedcategory = $categories->map(function ($category) {
             return [
                 "id" => $category->id,
-                "name" => $category->name,
+                "ka_name" => $category->ka_name,
+                "en_name" => $category->en_name,
                 "subcategories" => $category->subcategories->map(function ($subcategory) {
                     return [
                         "id" => $subcategory->id,
-                        "name" => $subcategory->name,
+                        "name" => $subcategory->ka_name,
                     ];
                 })
             ];
@@ -174,13 +178,14 @@ class CategoryController extends Controller
     public function displaysub()
     {
         $subcategories = Subcategory::with(['Categories' => function ($q) {
-            $q->select("categories.id", "categories.name");
-        }])->select("id", "name")->get();
+            $q->select("categories.id", "categories.ka_name");
+        }])->select("id", "ka_name", "en_name")->get();
 
         $mappedsubcategory = $subcategories->map(function ($subcategory) {
             return [
                 "id" => $subcategory->id,
-                "name" => $subcategory->name,
+                "ka_name" => $subcategory->ka_name,
+                "en_name" => $subcategory->en_name,
                 "category_id" => $subcategory->categories->pluck("id")->toArray()
             ];
         });

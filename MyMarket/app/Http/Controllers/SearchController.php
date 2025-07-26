@@ -26,16 +26,4 @@ class SearchController extends Controller
         $user = Auth::user();
         $this->searchRepository->setSearchHistory($user->id, $request->term);
     }
-    public function getPopularHistory()
-    {
-        $history = $this->searchRepository->getPopularSearches();
-        return response()->json($history);
-    }
-    public function getwithCategories(Request $request)
-    {
-        $searchTerm = $request->input('term');
-
-        $history = $this->searchRepository->getwithCategories($searchTerm);
-        return response()->json($history);
-    }
 }

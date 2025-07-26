@@ -16,13 +16,17 @@ class CategorySeeder extends Seeder
     public function run(): void
     {
         Maincategory::create([
-            "name" => "ქალი"
+            "ka_name" => "ქალი",
+            "en_name" => "Woman"
+
         ]);
         Category::create([
-            "name" => "ტანსაცმელი",
+            "ka_name" => "ტანსაცმელი",
+            "en_name" => "Clothes"
         ]);
         Subcategory::create([
-            "name" => "კაბა",
+            "ka_name" => "კაბა",
+            "en_name" => "Dress"
         ]);
     }
 }

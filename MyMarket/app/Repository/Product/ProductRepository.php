@@ -26,7 +26,7 @@ class ProductRepository implements ProductRepositoryInterface
     {
 
         $products = Product::query()->withAvg('rateproduct', 'rate')
-            ->with(['Maincategory:id,name', 'Category:id,name', 'Subcategory:id,name', 'eligibleStatuses'])
+            ->with(['Maincategory:id,ka_name,en_name', 'Category:id,ka_name,en_name', 'Subcategory:id,ka_name,en_name', 'eligibleStatuses'])
             ->when($name, fn($query) => $query->searchname($name))
             ->when($maincategoryids, fn($query) => $query->searchmain($maincategoryids))
             ->when($categoryids, fn($query) => $query->searchcategory($categoryids))
@@ -113,7 +113,6 @@ class ProductRepository implements ProductRepositoryInterface
     {
 
         try {
-
             $product = Product::create([
                 'name' => $request->name,
                 'description' => $request->description,

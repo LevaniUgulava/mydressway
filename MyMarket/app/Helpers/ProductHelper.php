@@ -72,15 +72,21 @@ class ProductHelper
         }
         $product->MainCategory = [
             'id' => optional($product->MainCategory)->id,
-            'name' => optional($product->MainCategory)->name
+            'ka_name' => optional($product->MainCategory)->ka_name,
+            'en_name' => optional($product->MainCategory)->en_name
+
         ];
         $product->Category = [
             'id' => optional($product->Category)->id,
-            'name' => optional($product->Category)->name
+            'ka_name' => optional($product->Category)->ka_name,
+            'en_name' => optional($product->Category)->en_name
+
         ];
         $product->Subcategory = [
             'id' => optional($product->Subcategory)->id,
-            'name' => optional($product->Subcategory)->name
+            'ka_name' => optional($product->Subcategory)->ka_name,
+            'en_name' => optional($product->Subcategory)->en_name
+
         ];
 
 

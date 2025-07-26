@@ -15,14 +15,13 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id')->nullable();
+            $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('address_id');
+            $table->foreign('address_id')->references('id')->on('addresses')->onDelete('cascade');
             $table->string('fullname');
             $table->decimal('amount_paid', 10, 2);
-            $table->string('town');
-            $table->string('address');
             $table->string('number');
             $table->string('status')->default(Status::Pending->value);
-            $table->string("payment_status")->default(PaymentEnum::Pending->value);
             $table->timestamps();
         });
     }

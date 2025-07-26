@@ -4,11 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Enums\Status;
 use App\Helpers\EnumHelper;
+use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
+use App\Notifications\CustomVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\Rule;
+use PDO;
 use Symfony\Component\CssSelector\Node\FunctionNode;
 
 class OrderController extends Controller
@@ -17,7 +23,7 @@ class OrderController extends Controller
     public function getorder()
     {
         $user = Auth::user();
-        $orders = $user->orders()->with('products')->get()->map(function ($order) {
+        $orders = $user->orders()->with(['products', 'address'])->get()->map(function ($order) {
             $order->products = $order->products->map(function ($product) {
                 $productModel = Product::find($product->id);
 
@@ -50,6 +56,8 @@ class OrderController extends Controller
                 'order_id' => $order->id,
                 'order_amount' => $order->amount_paid,
                 'order_status' => $order->status,
+                'order_fullname' => $order->fullname,
+                'address' => $order->address,
                 'products' => $products
             ];
 
@@ -129,5 +137,56 @@ class OrderController extends Controller
         return response()->json([
             'order' => $order,
         ]);
+    }
+
+    public function getAvailableCity()
+    {
+        $result = Http::get('https://onway.ge/index.php?route=api/order/regions');
+        return $result->json()['zones'];
+    }
+
+    public function SaveAddress(Request $request)
+    {
+        $request->validate([
+            'town' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'additionalInfo' => 'nullable|string|max:255'
+        ]);
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json('ავტორიზაციის გარეშე ვერ დაამატებ', 401);
+        }
+        $result = $user->addresses()->create(
+            $request->only(['town', 'address', 'additionalInfo'])
+        );
+        if ($result) {
+            return response()->json("დამატებულია", 200);
+        }
+        return response()->json("დაფიქსირდა შეცდომა", 500);
+    }
+    public function getAddress()
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return;
+        }
+        $addresses = $user->addresses;
+        return response()->json($addresses);
+    }
+
+    public function deleteAddress($id)
+    {
+        $user = Auth::user();
+        $address = Address::where('user_id', $user->id)->findorfail($id);
+        $isActive = $address->OrderStatus("Pending");
+        if (!$isActive) {
+            $address->orders->map(function ($o) {
+                $o->update(['address_id' => null]);
+            });
+            $address->delete();
+            return response()->json('მისამართი წაიშალა', 200);
+        }
+        return response()->json('მისამართზე არის აქტიური შეკვეთა', 400);
     }
 }

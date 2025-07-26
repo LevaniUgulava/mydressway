@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Models\HeaderContent;
 use Illuminate\Http\Request;
 
 class BannerController extends Controller
@@ -13,11 +14,16 @@ class BannerController extends Controller
         $banners = Banner::where('active', 1)->select('id', 'url', 'active')->get();
 
         $banners->map(function ($banner) {
-            $media = $banner->getMedia('banner')->map(function ($media) {
+            $media_desktop = $banner->getMedia('image-desktop')->map(function ($media) {
+                return url('storage/' . $media->id . '/' . $media->file_name);
+            });
+            $media_mobile = $banner->getMedia('image-mobile')->map(function ($media) {
                 return url('storage/' . $media->id . '/' . $media->file_name);
             });
 
-            $banner->media_url = $media;
+            $banner->media_desktop = $media_desktop;
+            $banner->media_mobile = $media_mobile;
+
             unset($banner->media);
         });
 
@@ -28,10 +34,15 @@ class BannerController extends Controller
         $banners = Banner::select('id', 'url', 'active')->get();
 
         $banners->map(function ($banner) {
-            $media = $banner->getMedia('banner')->map(function ($media) {
+            $media_desktop = $banner->getMedia('image-desktop')->map(function ($media) {
                 return url('storage/' . $media->id . '/' . $media->file_name);
             });
-            $banner->media_url = $media;
+            $media_mobile = $banner->getMedia('image-mobile')->map(function ($media) {
+                return url('storage/' . $media->id . '/' . $media->file_name);
+            });
+
+            $banner->media_desktop = $media_desktop;
+            $banner->media_mobile = $media_mobile;
             unset($banner->media);
         });
 
@@ -42,15 +53,20 @@ class BannerController extends Controller
     {
         $request->validate([
             'url' => 'string|nullable',
-            'image' => 'required'
+            'image-desktop' => 'required|image',
+            'image-mobile' => 'required|image'
+
         ]);
 
         $banner = Banner::create([
             'url' => $request->url,
             'active' => 0
         ]);
-        $banner->addMedia($request->file('image'))
-            ->toMediaCollection('banner');
+        $banner->addMedia($request->file('image-desktop'))
+            ->toMediaCollection('image-desktop');
+
+        $banner->addMedia($request->file('image-mobile'))
+            ->toMediaCollection('image-mobile');
         if ($banner) {
             return response()->json('success');
         }
@@ -88,5 +104,39 @@ class BannerController extends Controller
         $banner->save();
 
         return response()->json(['message' => 'Banner is now active'], 200);
+    }
+
+
+    public function displayHeader()
+    {
+        $headercontents = HeaderContent::where('active', 1)->get();
+        return response()->json($headercontents);
+    }
+    public function displayHeaderadmin()
+    {
+        $headercontents = HeaderContent::all();
+        return response()->json($headercontents);
+    }
+    public function createHeader(Request $request)
+    {
+        $request->validate([
+            'text' => "required|max:255"
+        ]);
+        $check = HeaderContent::create([
+            'text' => $request->text
+        ]);
+        if ($check) {
+            return response()->json('success', 200);
+        }
+        return response()->json('failed', 502);
+    }
+    public function activeHeader($id, $action)
+    {
+
+        $content = HeaderContent::findorfail($id);
+        $content->update([
+            'active' => $action === "active" ?  1 : 0
+        ]);
+        return response()->json('success');
     }
 }

@@ -33,3 +33,12 @@ Route::group(['prefix' => '/banner'], function () {
 
     Route::get('/display', [BannerController::class, 'display']);
 });
+
+Route::group(['prefix' => '/header'], function () {
+    Route::group(['middleware' => ['auth:sanctum']], function () {
+        Route::get('/display', [BannerController::class, 'displayHeader']);
+        Route::get('/admin/display', [BannerController::class, 'displayHeaderadmin']);
+        Route::post('/create', [BannerController::class, 'createHeader']);
+        Route::patch('/active/{id}/{action}', [BannerController::class, 'activeHeader']);
+    });
+});

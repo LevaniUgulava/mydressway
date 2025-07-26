@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('maincategories', function (Blueprint $table) {
+        Schema::create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->string('ka_name');
-            $table->string('en_name');
+            $table->string('town', 255);
+            $table->string('address', 255);
+            $table->string('additionalInfo', 255)->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('maincategories');
+        Schema::dropIfExists('addresses');
     }
 };

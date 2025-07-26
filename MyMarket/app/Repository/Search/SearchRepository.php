@@ -40,26 +40,4 @@ class SearchRepository implements SearchRepositoryInterface
             SearchHistory::where('id', $toDelete->id)->delete();
         }
     }
-    public function getPopularSearches()
-    {
-        $popular = SearchHistory::groupBy('term')
-            ->selectRaw('term, count(*) as count')
-            ->orderBy('count', 'desc')
-            ->limit(5)
-            ->get();
-        return $popular;
-    }
-    public function getwithCategories(string $searchQuery)
-    {
-        $subcategories = Subcategory::withCount(['Products' => function ($query) use ($searchQuery) {
-            $query->where('name', 'like', '%' . $searchQuery . '%');
-        }])
-            ->having('products_count', '>', 0)
-            ->orderBy('products_count', 'desc')
-            ->limit(2)
-            ->get();
-
-
-        return $subcategories;
-    }
 }

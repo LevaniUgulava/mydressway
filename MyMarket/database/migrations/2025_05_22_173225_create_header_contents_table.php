@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('maincategories', function (Blueprint $table) {
+        Schema::create('header_contents', function (Blueprint $table) {
             $table->id();
-            $table->string('ka_name');
-            $table->string('en_name');
+            $table->text('text');
+            $table->boolean('active')->default(0);
             $table->timestamps();
         });
     }
@@ -24,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('maincategories');
+        Schema::dropIfExists('header_contents');
     }
 };

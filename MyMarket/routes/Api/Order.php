@@ -24,6 +24,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/orders', [OrderController::class, 'getorder'])->middleware('auth:sanctum');
 
-    Route::get('/admin/orders', [OrderController::class, 'getadminorder'])->middleware('auth:sanctum');
-    Route::post('/admin/update/status', [OrderController::class, 'orderstatus'])->middleware('auth:sanctum');
-    Route::get('/admin/orders/{id}', [OrderController::class, 'singleadminorder'])->middleware('auth:sanctum');
+Route::get('/admin/orders', [OrderController::class, 'getadminorder'])->middleware('auth:sanctum');
+Route::post('/admin/update/status', [OrderController::class, 'orderstatus'])->middleware('auth:sanctum');
+Route::get('/admin/orders/{id}', [OrderController::class, 'singleadminorder'])->middleware('auth:sanctum');
+
+Route::get('/availablecity', [OrderController::class, "getAvailableCity"]);
+
+Route::post('/addAddress', [OrderController::class, "SaveAddress"])->middleware('auth:sanctum');
+
+Route::get('/getAddress', [OrderController::class, "getAddress"])->middleware('auth:sanctum');
+Route::delete('/deleteAddress/{id}', [OrderController::class, "deleteAddress"])->middleware('auth:sanctum');
