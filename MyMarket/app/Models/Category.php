@@ -24,4 +24,8 @@ class Category extends Model
     {
         return $this->belongsToMany(Maincategory::class, "maincategory_category");
     }
+    public function promocodes()
+    {
+        return $this->belongsToMany(Promocode::class, 'category_promocode');
+    }
 }

@@ -11,6 +11,8 @@ use App\Repository\EligibleProduct\EligibleProductRepository;
 use App\Repository\EligibleProduct\EligibleProductRepositoryInterface;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Product\ProductRepositoryInterface;
+use App\Repository\Promocode\PromocodeRepository;
+use App\Repository\Promocode\PromocodeRepositoryInterface;
 use App\Repository\Roles\RolesRepository;
 use App\Repository\Roles\RolesRepositoryInterface;
 use App\Repository\Search\SearchRepository;
@@ -34,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(EligibleProductRepositoryInterface::class, EligibleProductRepository::class);
         $this->app->singleton(BrandRepositoryInterface::class, BrandRepository::class);
         $this->app->singleton(SearchRepositoryInterface::class, SearchRepository::class);
+        $this->app->singleton(PromocodeRepositoryInterface::class, PromocodeRepository::class);
     }
 
     /**

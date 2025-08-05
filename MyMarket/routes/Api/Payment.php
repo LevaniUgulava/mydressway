@@ -31,4 +31,4 @@ Route::group(["middleware" => ["auth:sanctum", "verified"]], function () {
     Route::get('/updatestatus', [PaymentController::class, 'updatestatus']);
 });
 Route::get('/get/temporder', [PaymentController::class, 'getTemporder'])->middleware(["userverified", 'auth:sanctum']);
-Route::post('/temporder', [PaymentController::class, 'Temporder'])->middleware("userverified");
+Route::post('/temporder', [PaymentController::class, 'Temporder'])->middleware(["userverified", 'auth:sanctum']);

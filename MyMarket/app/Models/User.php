@@ -120,4 +120,14 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(Address::class);
     }
+
+    public function temporders()
+    {
+        return $this->hasMany(TemporaryOrder::class);
+    }
+
+    public function usertemp()
+    {
+        return $this->hasOne(Usertemp::class);
+    }
 }

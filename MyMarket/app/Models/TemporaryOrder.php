@@ -11,8 +11,7 @@ class TemporaryOrder extends Model
     protected $table = "temporary_orders";
 
     protected $fillable = [
-        "user_id",
-        "guest_token",
+        "usertemp_id",
         "name",
         "color",
         "type",
@@ -22,4 +21,14 @@ class TemporaryOrder extends Model
         "retail_price",
         "total_price"
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function usertemp()
+    {
+        return $this->belongsTo(Usertemp::class);
+    }
 }

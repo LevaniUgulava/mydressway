@@ -13,8 +13,7 @@ return new class extends Migration
     {
         Schema::create('temporary_orders', function (Blueprint $table) {
             $table->id();
-            $table->integer("user_id")->nullable();
-            $table->string("guest_token")->nullable();
+            $table->foreignId('usertemp_id')->constrained('usertemps')->onDelete('cascade');
             $table->integer("quantity");
             $table->string("name");
             $table->integer("product_id");
@@ -23,8 +22,6 @@ return new class extends Migration
             $table->string("type");
             $table->decimal("retail_price", 8, 2);
             $table->decimal("total_price", 8, 2);
-            $table->index('guest_token');
-
             $table->timestamps();
         });
     }

@@ -33,10 +33,18 @@ class PaymentController extends Controller
 
     public function Temporder(Request $request)
     {
-        $user = auth('sanctum')->user();
+        $user = auth()->user();
+
+        if (!$user->usertemp) {
+            $user->usertemp()->create([
+                "payment" => "tbc",
+                "expire_at" => now()->addDay(),
+                "total_price" => 0,
+            ]);
+        }
+
         $request->validate([
             "products" => "required|array",
-            "products.*.guest_token" => "nullable|string",
             "products.*.quantity" => "required|integer",
             "products.*.product_id" => "required|numeric",
             "products.*.type" => "required|string|max:100",
@@ -47,38 +55,48 @@ class PaymentController extends Controller
             "products.*.total_price" => "required|numeric",
         ]);
 
+        $usertemp = $user->fresh()->usertemp;
+        $totalPrice = 0;
+
         foreach ($request->products as $item) {
-            $temporder = TemporaryOrder::create([
-                "user_id" => $user->id ?? null,
-                "guest_token" => $item["guest_token"] ?? null,
+            TemporaryOrder::create([
+                'usertemp_id' => $usertemp->id,
                 "quantity" => $item["quantity"],
                 "product_id" => $item["product_id"],
                 "size" => $item["size"],
                 "name" => $item["name"],
-                "type" => $item['type'],
+                "type" => $item["type"],
                 "color" => $item["color"],
                 "retail_price" => $item["retail_price"],
                 "total_price" => $item["total_price"]
             ]);
+
+            $totalPrice += $item["total_price"];
         }
 
-        if ($temporder) {
-            return response()->json([], 200);
-        } else {
-            return response()->json([], 400);
-        }
+        $usertemp->update([
+            'total_price' => $totalPrice
+        ]);
+
+        return response()->json([], 200);
     }
-    public function getTemporder(Request $request)
+
+    public function getTemporder()
     {
         $user = auth()->user();
 
-        if ($user) {
-            $tempOrders = TemporaryOrder::Where("user_id", $user->id)
-                ->get();
+        if (!$user->usertemp) {
+            return response()->json(["orders" => [], "total_price" => 0]);
         }
 
-        return response()->json($tempOrders);
+        if ($user->usertemp) {
+            $tempOrders = $user->usertemp->temporders;
+            $price = $user->usertemp->total_price;
+        }
+
+        return response()->json(["orders" => $tempOrders, "total_price" => $price]);
     }
+    
     public function deleteTempOrder(Request $request)
     {
         $guestToken = $request->header("Guest-Token");

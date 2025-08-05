@@ -26,7 +26,7 @@ class Product extends Model implements HasMedia
     public function scopeSearchname($query, $name)
     {
         if ($name) {
-            return $query->where('name', 'LIKE', '%' . $name . '%');
+            return $query->where('name', 'LIKE',  $name . '%');
         }
 
         return $query;
