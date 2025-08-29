@@ -33,7 +33,7 @@ Route::get('/similar/{id}/products', [ProductController::class, 'similarproducts
 Route::post('/Search', [ProductController::class, 'filterbyname']);
 Route::get('/Searchcategory/{id}', [ProductController::class, 'filterbycategory']);
 
-Route::group(['middleware' => ['auth:sanctum']], function () {
+Route::group(['middleware' => ['auth:api']], function () {
     Route::get('/admindisplay', [ProductController::class, 'admindisplay']);
     Route::post('/addproduct', [ProductController::class, 'create']);
     Route::post('/notactive/{id}', [ProductController::class, 'notactive']);
@@ -42,7 +42,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 });
 Route::get('/discountproducts', [ProductController::class, 'discountproducts']);
 
-Route::post('/product/rate/{id}', [RateContorller::class, 'SendRate'])->middleware('auth:sanctum');
+Route::post('/product/rate/{id}', [RateContorller::class, 'SendRate'])->middleware('auth:api');
 
 Route::get('/getSizes', [ProductController::class, 'getSizes']);
 Route::get('/nameforsearch', [ProductController::class, 'getNameforSearch']);

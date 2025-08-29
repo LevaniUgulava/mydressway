@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
 use App\Notifications\ForgetPassword;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,18 +23,28 @@ class ProfileController extends Controller
 
     public function Updateprofile(Request $request)
     {
-        $user = Auth::user();
-        $request->validate([
-            'email' => 'required|email|max:255',
-            'name' => 'required|string|max:255',
-        ]);
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-        ]);
-        return response()->json([
-            'message' => 'User Profile Updated',
-        ]);
+        try {
+            $user = Auth::user();
+            $request->validate([
+                'email' => 'required|email|max:255',
+                'name' => 'required|string|max:255',
+                'surname' => 'required|string|max:255',
+
+            ]);
+            $user->update([
+                'name' => $request->name,
+                'email' => $request->email,
+                'surname' => $request->surname,
+            ]);
+            return response()->json([
+                'message' => "ინფორმაცია წარმატებით განახლდა",
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                "message" => $e->getMessage()
+            ], 404);
+        }
     }
     public function Updatepassword(Request $request)
     {
@@ -41,21 +52,31 @@ class ProfileController extends Controller
         if (!$user) {
             return response()->json([], 404);
         }
+
+        $hasPassword = $user->password !== null;
+
         $request->validate([
-            'oldpassword' => 'required|string|min:6',
-            'newpassword' => 'required|string|min:6',
+            'oldpassword' => $hasPassword ? 'required|string' : 'nullable|string',
+            'newpassword' => 'required|string|min:8',
         ]);
-        if (Hash::check($request->oldpassword, $user->password)) {
-            $update = $user->update([
-                'password' => $request->newpassword
-            ]);
-            if ($update) {
-                return response()->json('Password Updated succesfully');
-            }
-        } else {
-            return response()->json('the current password is invalid', 404);
-        };
+
+        if (!$hasPassword) {
+            $user->password = Hash::make($request->newpassword);
+            $user->save();
+
+            return response()->json('პაროლი წარმატებით დაყენდა', 200);
+        }
+
+        if (!Hash::check($request->oldpassword, $user->password)) {
+            return response()->json('მიმდინარე პაროლი არასწორია', 403);
+        }
+
+        $user->password = Hash::make($request->newpassword);
+        $user->save();
+
+        return response()->json('პაროლი წარმატებით განახლდა', 200);
     }
+
 
 
     public function getprofile()
@@ -64,7 +85,6 @@ class ProfileController extends Controller
 
         return response()->json([
             'user' => $user,
-            "isVerified" => $user->hasVerifiedEmail()
         ]);
     }
     public function likeproduct()

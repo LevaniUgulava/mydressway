@@ -58,6 +58,7 @@ class Kernel extends HttpKernel
      * @var array<string, class-string|string>
      */
     protected $middlewareAliases = [
+        'jwt.auth' => \App\Http\Middleware\JwtAuthorizeMiddleware::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
         'editor' => \App\Http\Middleware\Editormiddleware::class,
         'auth' => \App\Http\Middleware\Authenticate::class,

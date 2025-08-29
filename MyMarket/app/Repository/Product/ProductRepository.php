@@ -25,6 +25,7 @@ class ProductRepository implements ProductRepositoryInterface
     public function display($name, $maincategoryids, $categoryids, $subcategoryids, $pagination, $user, $section, $lang, $price1, $price2, $colors, $sizes, $brands)
     {
 
+
         $products = Product::query()->withAvg('rateproduct', 'rate')
             ->with(['Maincategory:id,ka_name,en_name', 'Category:id,ka_name,en_name', 'Subcategory:id,ka_name,en_name', 'eligibleStatuses'])
             ->when($name, fn($query) => $query->searchname($name))
@@ -126,6 +127,7 @@ class ProductRepository implements ProductRepositoryInterface
 
             $sizes = $request->input('size', []);
             $quantities = $request->input('quantity', []);
+            $hex = $request->input('hex', []);
             $colors = $request->input('color', []);
             if ($request->size_type === "numeric") {
                 foreach ($sizes as $index => $size) {
@@ -137,6 +139,8 @@ class ProductRepository implements ProductRepositoryInterface
                         $numeric_size->colors()->create([
                             'color' => $color,
                             'quantity' => $quantities[$index][$colorindex],
+                            'hex' => $hex[$index][$colorindex],
+
                         ]);
                     }
                 }
@@ -151,6 +155,7 @@ class ProductRepository implements ProductRepositoryInterface
                         $cloth_size->colors()->create([
                             'color' => $color,
                             'quantity' => $quantities[$index][$colorindex],
+                            'hex' => $hex[$index][$colorindex],
                         ]);
                     }
                 }

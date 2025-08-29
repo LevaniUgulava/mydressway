@@ -72,7 +72,7 @@ class UserStatusRepository implements UserStatusRepositoryInterface
     public function displayStatus()
     {
         $user = Auth::user();
-        $status = $user->userstatus()->select('name', 'start_data', 'end_date')->first();
+        $status = $user->userstatus()->select('name', "time")->first();
         return $status;
     }
 }

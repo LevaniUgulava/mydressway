@@ -29,7 +29,7 @@ class CategoryController extends Controller
                 "categories" => $category->categories->map(function ($category) {
                     return [
                         "id" => $category->id,
-                        "name" => $category->ka_name,
+                        "ka_name" => $category->ka_name,
                     ];
                 })
             ];
@@ -42,7 +42,8 @@ class CategoryController extends Controller
     public function Maincategory(Request $request)
     {
         Maincategory::create([
-            'name' => $request->name,
+            "ka_name" => $request->ka_name,
+            "en_name" => $request->en_name,
         ]);
         return response()->json([
             'message' => 'MainCategory Added',
@@ -79,6 +80,10 @@ class CategoryController extends Controller
                 "ka_name" => $category->ka_name,
                 "en_name" => $category->en_name,
                 "maincategory_id" => $category->maincategories->pluck("id")->toArray(),
+                "image_url" => $category->getMedia('category')->map(function ($media) {
+                    return url('storage/' . $media->id . '/' . $media->file_name);
+                }),
+
 
             ];
         });
@@ -99,7 +104,7 @@ class CategoryController extends Controller
                 "subcategories" => $category->subcategories->map(function ($subcategory) {
                     return [
                         "id" => $subcategory->id,
-                        "name" => $subcategory->ka_name,
+                        "ka_name" => $subcategory->ka_name,
                     ];
                 })
             ];
@@ -146,12 +151,30 @@ class CategoryController extends Controller
 
     public function category(Request $request)
     {
-        Category::create([
-            'name' => $request->name,
+        $validated = $request->validate([
+            'ka_name' => 'required|string|max:255',
+            'en_name' => 'required|string|max:255',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif',
         ]);
-        return response()->json([
-            'message' => 'Category Added',
-        ]);
+
+        try {
+            $category = Category::create([
+                'ka_name' => $validated['ka_name'],
+                'en_name' => $validated['en_name'],
+            ]);
+
+            $category->addMediaFromRequest('image')->toMediaCollection('category');
+
+            return response()->json([
+                'message' => 'Category Added',
+                'category' => $category,
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to add category',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
     public function categorydelete($id)
     {
@@ -195,9 +218,8 @@ class CategoryController extends Controller
     public function Subcategory(Request $request)
     {
         Subcategory::create([
-            'name' => $request->name,
-            'maincategory_id' => $request->maincategory_id,
-            'category_id' => $request->category_id
+            "ka_name" => $request->ka_name,
+            "en_name" => $request->en_name,
 
         ]);
         return response()->json([

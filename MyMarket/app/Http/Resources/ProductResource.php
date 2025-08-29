@@ -47,9 +47,10 @@ class ProductResource extends JsonResource
             }),
             'active' => $this->active,
             'isLiked' => $this->isLiked ?? false,
-            'isRated' => $this->isRated ?? false,
-            'Rate' => number_format((float)$this->rateproduct_avg_rate, 1),
-            'MyRate' => (float)$this->MyRate
+            // 'isRated' => $this->isRated ?? false,
+            // 'Rate' => number_format((float)$this->rateproduct_avg_rate, 1),
+            // 'MyRate' => (float)$this->MyRate,
+            "isNew" => $productService->checkNew($this->created_at)
 
         ];
     }

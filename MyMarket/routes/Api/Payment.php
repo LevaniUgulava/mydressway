@@ -21,14 +21,18 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::post('/checkout', [PaymentController::class, 'checkout'])->middleware('auth:sanctum');
+Route::post('/checkout', [PaymentController::class, 'checkout'])->middleware('auth:api');
 
 
 Route::get('/manage/{id}/{size}/{color}/{quantity}', [PaymentController::class, 'managequantity']);
-Route::delete('delete/temporder', [PaymentController::class, 'deleteTempOrder']);
 
 Route::group(["middleware" => ["auth:sanctum", "verified"]], function () {
     Route::get('/updatestatus', [PaymentController::class, 'updatestatus']);
 });
-Route::get('/get/temporder', [PaymentController::class, 'getTemporder'])->middleware(["userverified", 'auth:sanctum']);
-Route::post('/temporder', [PaymentController::class, 'Temporder'])->middleware(["userverified", 'auth:sanctum']);
+
+Route::group(["middleware" => ["auth:api", "userverified"]], function () {
+    Route::delete('delete/temporder', [PaymentController::class, 'deleteTempOrder']);
+    Route::get('/get/temporder', [PaymentController::class, 'getTemporder']);
+    Route::post('/temporder', [PaymentController::class, 'Temporder']);
+    Route::put('/changepayment', [PaymentController::class, 'changePayment']);
+});

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
@@ -67,13 +67,16 @@ class Product extends Model implements HasMedia
         } elseif ($section === "discount") {
             $query->where(function ($q) use ($user) {
                 $q->where('discount', '!=', 0);
-                if ($user && isset($user->userstatus) && $user->userstatus->isActive()) {
+                if ($user && isset($user->userstatus) && $user->userstatus->isActive($user)) {
                     $q->orWhereHas('eligibleStatuses', function ($q2) use ($user) {
                         $q2->where('userstatus_id', $user->userstatus->id)
                             ->where('discount', '!=', 0);
                     });
                 }
             });
+        } elseif ($section === "new") {
+            $sevenDaysAgo = Carbon::now()->subDays(7);
+            $query->where('created_at', '>=', $sevenDaysAgo);
         }
         return $query;
     }

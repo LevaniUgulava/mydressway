@@ -16,8 +16,8 @@ class UserStatusSeeder extends Seeder
         Userstatus::create([
             "name" => "სტატუსის გარეშე",
             "toachieve" => 100,
-            "start_data" => now(),
-            "end_date" => now()->addDay(5)
+            "time" => 2,
+            "expansion" => "month"
         ]);
     }
 }

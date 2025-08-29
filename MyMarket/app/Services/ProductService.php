@@ -2,8 +2,21 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
+
 class ProductService
 {
+
+    public function checkNew($created_at)
+    {
+        $createdAt = Carbon::parse($created_at);
+        $sevenDaysAgo = Carbon::now()->subDays(7);
+        if ($createdAt->greaterThanOrEqualTo($sevenDaysAgo)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
     public function getQuantity($product, $size, $color)
     {
         if ($product) {
@@ -25,7 +38,8 @@ class ProductService
                     'details' => $size->colors->map(function ($color) {
                         return [
                             'color' => $color->color,
-                            'quantity' => $color->quantity
+                            'quantity' => $color->quantity,
+                            'hex' => $color->hex
                         ];
                     }),
                 ];
@@ -38,7 +52,9 @@ class ProductService
                     'details' => $size->colors->map(function ($color) {
                         return [
                             'color' => $color->color,
-                            'quantity' => $color->quantity
+                            'quantity' => $color->quantity,
+                            'hex' => $color->hex
+
                         ];
                     }),
                 ];

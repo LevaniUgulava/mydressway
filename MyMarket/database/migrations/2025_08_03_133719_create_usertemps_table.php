@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->string('promocode')->nullable();
-            $table->string('payment');
+            $table->string('payment')->nullable();
             $table->timestamp("expire_at");
             $table->decimal('total_price', 10, 2);
+            $table->decimal('promocode_price', 10, 2);
             $table->timestamps();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });

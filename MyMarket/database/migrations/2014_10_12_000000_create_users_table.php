@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('facebook_id')->nullable();
             $table->string('google_id')->nullable();
             $table->unsignedBigInteger('userstatus_id')->nullable();
+            $table->timestamp('userstatus_time')->nullable();
             $table->decimal('total_spent', 10, 2)->default(0);
             $table->string('confirmation_token')->nullable();
             $table->timestamp('email_verified_at')->nullable();

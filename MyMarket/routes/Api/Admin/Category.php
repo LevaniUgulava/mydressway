@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::group(['prefix' => 'admin/categories', 'middleware' => ['auth:sanctum']], function () {
+Route::group(['prefix' => 'admin/categories', 'middleware' => ['auth:api']], function () {
 
 
     Route::group(['middleware' => 'admin'], function () {
@@ -50,4 +50,3 @@ Route::get('/sizes', [CategoryController::class, 'displaysize']);
 Route::get('/maincategory/{id}', [CategoryController::class, 'Maincategorybyid']);
 Route::get('/category/{id}', [CategoryController::class, 'categorybyid']);
 Route::get('/subcategory/{id}', [CategoryController::class, 'subcategorybyid']);
-

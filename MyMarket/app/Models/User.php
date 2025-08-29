@@ -23,12 +23,14 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     protected $fillable = [
         'name',
+        'surname',
         'email',
         'password',
         'google_id',
         'confirmation_token',
         'email_verified_at',
         'userstatus_id',
+        'userstatus_time'
     ];
 
     /**
@@ -49,6 +51,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'userstatus_time' => 'datetime',
     ];
 
 
@@ -102,7 +105,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         if ($this->userstatus) {
             $isEligible = $product->eligibleStatuses()->where('userstatus_id', $this->userstatus->id)->withPivot('discount')->first();
-            if ($isEligible && $this->userstatus && $isEligible->pivot->discount > 0 && $this->userstatus->isActive()) {
+            if ($isEligible && $this->userstatus && $isEligible->pivot->discount > 0 && $this->userstatus->isActive($this)) {
                 $discount = $isEligible->pivot->discount;
                 return round($price * (1 - ($discount / 100)), 2);
             }

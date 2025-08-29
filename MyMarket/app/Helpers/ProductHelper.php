@@ -15,7 +15,7 @@ class ProductHelper
 
             if ($user && $user->userstatus_id) {
                 $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
-                if ($isEligible && $user->userstatus->isActive()) {
+                if ($isEligible && $user->userstatus->isActive($user)) {
                     $product->discountstatus = [
                         'discount' => $isEligible->pivot->discount
                     ];
@@ -51,7 +51,7 @@ class ProductHelper
                 ->withPivot('discount')
                 ->first();
 
-            if ($isEligible && $user->userstatus->isActive()) {
+            if ($isEligible && $user->userstatus->isActive($user)) {
                 $product->discountstatus = [
                     'discount' => $isEligible->pivot->discount
                 ];

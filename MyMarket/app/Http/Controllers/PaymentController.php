@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-use function PHPSTORM_META\map;
 
 class PaymentController extends Controller
 {
@@ -37,9 +36,11 @@ class PaymentController extends Controller
 
         if (!$user->usertemp) {
             $user->usertemp()->create([
-                "payment" => "tbc",
+                "payment" => null,
                 "expire_at" => now()->addDay(),
                 "total_price" => 0,
+                "promocode_price" => 0,
+
             ]);
         }
 
@@ -55,23 +56,28 @@ class PaymentController extends Controller
             "products.*.total_price" => "required|numeric",
         ]);
 
+
         $usertemp = $user->fresh()->usertemp;
         $totalPrice = 0;
 
         foreach ($request->products as $item) {
-            TemporaryOrder::create([
-                'usertemp_id' => $usertemp->id,
-                "quantity" => $item["quantity"],
-                "product_id" => $item["product_id"],
-                "size" => $item["size"],
-                "name" => $item["name"],
-                "type" => $item["type"],
-                "color" => $item["color"],
-                "retail_price" => $item["retail_price"],
-                "total_price" => $item["total_price"]
-            ]);
 
-            $totalPrice += $item["total_price"];
+            TemporaryOrder::firstOrCreate(
+                [
+                    'usertemp_id' => $usertemp->id,
+                    'product_id' => $item['product_id'],
+                    'size' => $item['size'],
+                ],
+                [
+                    'quantity' => $item['quantity'],
+                    'name' => $item['name'],
+                    'type' => $item['type'],
+                    'color' => $item['color'],
+                    'retail_price' => $item['retail_price'],
+                    'total_price' => $item['total_price']
+                ]
+            );
+            $totalPrice += $item['total_price'];
         }
 
         $usertemp->update([
@@ -86,26 +92,55 @@ class PaymentController extends Controller
         $user = auth()->user();
 
         if (!$user->usertemp) {
-            return response()->json(["orders" => [], "total_price" => 0]);
+            return response()->json(["orders" => [], "total_price" => 0, "promocode" => null, "payment" => null]);
         }
 
-        if ($user->usertemp) {
-            $tempOrders = $user->usertemp->temporders;
-            $price = $user->usertemp->total_price;
+        $usertemp = $user->usertemp;
+        $tempOrders = $usertemp->temporders;
+        $payment = $usertemp->payment;
+        $promocode = $usertemp->promocode;
+
+        if ($promocode) {
+            $price = $usertemp->promocode_price;
+        } else {
+            $price = $usertemp->total_price;
         }
 
-        return response()->json(["orders" => $tempOrders, "total_price" => $price]);
+        return response()->json([
+            "orders" => $tempOrders,
+            "promocode" => $promocode,
+            "payment" => $payment,
+            "total_price" => $price
+        ]);
     }
-    
-    public function deleteTempOrder(Request $request)
+
+    public function changePayment()
     {
-        $guestToken = $request->header("Guest-Token");
-        $user = auth('sanctum')->user();
+        $user = auth()->user();
+
+        if (!$user->usertemp) {
+            return response()->json(["orders" => [], "total_price" => 0, "promocode" => null, "payment" => null]);
+        }
+        try {
+            $user->usertemp->update([
+                "promocode" => null,
+                "payment" => null
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "message" => "An error occurred while updating payment details.",
+                "error" => $e->getMessage()
+            ], 500);
+        }
+    }
+
+
+    public function deleteTempOrder()
+    {
+        $user = auth()->user();
         if ($user) {
-            $deleted = TemporaryOrder::Where("user_id", $user->id)
+            $deleted = $user->usertemp
                 ->delete();
-        } elseif ($guestToken) {
-            $deleted = TemporaryOrder::where("guest_token", $guestToken)->delete();
         } else {
             return response()->json(['error' => 'User or guest token is required'], 400);
         }
@@ -173,18 +208,18 @@ class PaymentController extends Controller
                 ]);
                 $i = $this->managequantity($item['product_id'], $item['size'], $item["color"], $item['quantity']);
             }
+
+
             if ($user && $get['type'] === "cart") {
                 $cart = $user->cart;
-
                 if (!$cart) {
                     return response()->json(['message' => 'No active cart available for checkout'], 404);
                 }
-                $totalspent = $this->updatetotalspent($user, $price);
-                $this->discountController->updateStatus($user, $totalspent);
-                $this->checkoutmail($gets, $user);
                 $cart->products()->detach();
                 $cart->delete();
             }
+            $this->updatetotalspent($user, $price);
+            $this->checkoutmail($gets, $user);
             return response()->json($i);
         }
         return response()->json(['message' => 'Order creation failed'], 500);

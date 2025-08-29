@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['middleware' => 'auth:sanctum'], function () {
+Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/profile/update', [ProfileController::class, 'Updateprofile']);
     Route::post('/profile/update/password', [ProfileController::class, 'Updatepassword']);
     Route::get('/getprofile', [ProfileController::class, 'getprofile']);

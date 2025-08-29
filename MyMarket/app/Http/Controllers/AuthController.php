@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Models\Deactivate;
+use App\Models\Subscriber;
 use App\Models\User;
 use App\Models\Userstatus;
 use App\Notifications\CustomVerifyEmail;
 use App\Notifications\DeleteAccountNotification;
 use App\Notifications\RegisterNotification;
+use App\Services\JwtService;
+use App\Services\RefreshToken;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -18,9 +21,16 @@ class AuthController extends Controller
 {
     public function register(RegisterRequest $request)
     {
+        if (User::where('email', $request->email)->exists()) {
+            return response()->json([
+                'success' => false,
+
+            ], 409);
+        }
 
         $user = User::create([
             'name' => $request->name,
+            'surname' => $request->surname,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'userstatus_id' => 1,
@@ -53,30 +63,101 @@ class AuthController extends Controller
         }
         return response()->json(["success" => false], 500);
     }
-    public function login(LoginRequest $request)
+    public function login(LoginRequest $request, JwtService $jwt, RefreshToken $refresh)
     {
         $user = User::where('email', $request->email)->first();
         if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
-            ], 401);
+            ], 404);
         }
-        $status = $user->userstatus->name;
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'success' => false,
+                'action' => 'verify_email',
+            ], 403);
+        }
+        $client_type = $request->client_type;
+        $access = $jwt->accessToken($user->id);
+        $newRt = $refresh->issue($user, $client_type);
 
-        $token = $user->createToken('api', [], now()->addDays(3))->plainTextToken;
-        $roles = $user->getRoleNames();
+        $expire_at = $client_type === 'web' ? config('jwt.web_refresh_ttl') : config('jwt.native_refresh_ttl');
+
         return response()->json([
-            'id' => $user->id,
-            'name' => $user->name,
-            'token' => $token,
-            'roles' => $roles,
-            'status' => $status,
-            'total_spent' => $user->total_spent,
-            "number" => $user->phone_number
-        ], 200);
+            'refresh_token' => $newRt,
+            'access_token'  => $access,
+            'token_type'    => 'Bearer',
+            'expires_in'    => config('jwt.access_ttl'),
+        ])->cookie(
+            'refresh_token',
+            $newRt,
+            (int)($expire_at / 60),
+            '/',
+            null,
+            false,
+            true,
+            false,
+            'lax'
+        );
+    }
+    public function userInfo()
+    {
+        $user = Auth::user();
+        $role = $user->getRoleNames()->first();
+
+        $hasPassword = $user->password !== null;
+
+        if ($user->facebook_id) {
+            $platform = 'Facebook';
+        } elseif ($user->google_id) {
+            $platform = 'Google';
+        } else {
+            $platform = null;
+        }
+
+        return response()->json([
+            'user' => $user,
+            'hasPassword' => [
+                'password' => $hasPassword,
+                'platform' => $platform
+            ],
+            'role' => $role
+        ]);
     }
 
-    public function adminlogin(Request $request)
+    public function refresh(Request $request, JwtService $jwt, RefreshToken $refresh)
+    {
+        $client_type = $request->client_type;
+        $token = $request->cookie('refresh_token') ?? $request->input('refresh_token');
+        if (!$token) {
+            return response()->json([
+                'message' => 'The refresh token is missing.'
+            ], 422);
+        }
+        $user = $refresh->ValidateRefresh($token);
+        if (!$user) return response()->json(['message' => 'Invalid refresh'], 403);
+        $access  = $jwt->accessToken($user->id);
+        $newRt   = $refresh->updateIssue($token);
+
+        $expire_at = $client_type === 'web' ? config('jwt.web_refresh_ttl') : config('jwt.native_refresh_ttl');
+
+        return response()->json([
+            'access_token'  => $access,
+            'refresh_token' => $newRt,
+        ])->cookie(
+            'refresh_token',
+            $newRt,
+            (int)($expire_at / 60),
+            '/',
+            null,
+            false,
+            true,
+            false,
+            'lax'
+        );
+    }
+
+    public function adminlogin(Request $request, JwtService $jwt, RefreshToken $refresh)
     {
         $user = User::where('email', $request->email)->first();
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -89,20 +170,35 @@ class AuthController extends Controller
                 'message' => 'havenot got access',
             ], 403);
         }
-        $token = $user->createToken('api')->plainTextToken;
+        $access = $jwt->accessToken($user->id);
+
+        $newRt = $refresh->issue($user, 'web');
         $roles = $user->getRoleNames();
         return response()->json([
-            'name' => $user->name,
-            'token' => $token,
+            'refresh_token' => $newRt,
+            'access_token'  => $access,
+            'token_type'    => 'Bearer',
+            'expires_in'    => config('jwt.access_ttl'),
             'roles' => $roles
-        ]);
+        ])->cookie(
+            'refresh_token',
+            $newRt,
+            (int)(config('jwt.web_refresh_ttl') / 60),
+            '/',
+            null,
+            false,
+            true,
+            false,
+            'lax'
+        );
     }
 
-    public function logout()
+    public function logout(RefreshToken $rt)
     {
         $user = Auth::user();
-        $user->currentAccessToken()->delete();
-        return response()->json(['message' => 'Successfully logged out']);
+        $rt->revokeAll($user);
+        return response()->json(['message' => true], 200)
+            ->cookie('refresh_token', '', -1, '/auth/refresh', null, true, true, false, 'Strict');
     }
 
 
@@ -193,5 +289,20 @@ class AuthController extends Controller
         }
 
         return response()->json(['success' => false], 400);
+    }
+
+    public function subscribe(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email|unique:subscribers,email'
+        ]);
+
+        Subscriber::create([
+            'email' => $request->email,
+            'verified' => false,
+        ]);
+
+
+        return response()->json(['message' => 'თქვენ წარმატებით გამოიწერეთ სიახლეები!']);
     }
 }

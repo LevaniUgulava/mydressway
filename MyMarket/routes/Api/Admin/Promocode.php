@@ -25,7 +25,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::group(['prefix' => 'admin/promocode', 'middleware' => ['admin', 'auth:sanctum']], function () {
+Route::group(['prefix' => 'admin/promocode', 'middleware' => ['admin', 'auth:api']], function () {
     Route::get('/', [PromocodeController::class, 'display']);
     Route::get('/{id}', [PromocodeController::class, 'displayByid']);
 });
@@ -35,4 +35,4 @@ Route::post('/create', [PromocodeController::class, 'create']);
 Route::post('/createrelation', [PromocodeController::class, 'createRelation']);
 
 
-Route::post('/test/promo', [PromocodeService::class, 'applytoPromocode'])->middleware('auth:sanctum');
+Route::post('/test/promo', [PromocodeService::class, 'applytoPromocode'])->middleware('auth:api');

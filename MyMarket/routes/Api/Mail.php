@@ -2,8 +2,9 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\MailController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\Profile\CartController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,11 +23,4 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::group(['middleware' => 'auth:api'], function () {
-    Route::post('/addcart/{product}', [CartController::class, 'cart']);
-    Route::get('/mycart', [CartController::class, 'getcart']);
-    Route::post('/quantity/{id}/{action}', [CartController::class, 'updatequantity']);
-    Route::patch('/size/{id}', [CartController::class, 'changeSize']);
-    Route::patch('/color/{id}', [CartController::class, 'changeColor']);
-    Route::post('/delete/{id}/cart', [CartController::class, 'deletecart']);
-});
+Route::group(['middleware' => ['auth:api']], function () {});

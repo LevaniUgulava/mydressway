@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('userstatuses', function (Blueprint $table) {
+        Schema::create('subscribers', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->decimal('toachieve', 10, 2);
-            $table->integer('time');
-            $table->string('expansion');
+            $table->string('email')->unique();
+            $table->boolean('verified')->default(false);
             $table->timestamps();
         });
     }
@@ -26,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('userstatuses');
+        Schema::dropIfExists('subscribers');
     }
 };

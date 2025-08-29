@@ -21,7 +21,7 @@ class ProductController extends Controller
     }
     public function display(Request $request)
     {
-        $user = auth('sanctum')->user();
+        $user = auth('api')->user();
         $name = $request->query('searchname', '');
         $maincategoryids = $request->query('maincategory', '');
         $categoryids = $request->query('category', '');
@@ -87,14 +87,14 @@ class ProductController extends Controller
 
     public function displaybyid($id)
     {
-        $user = auth('sanctum')->user();
+        $user = auth('api')->user();
         $product = $this->productRepository->displaybyid($id, $user);
         return new ProductResource($product);
     }
 
     public function similarproducts($id)
     {
-        $user = auth('sanctum')->user();
+        $user = auth('api')->user();
         $products = $this->productRepository->similarproducts($id, $user);
         return ProductResource::collection($products);
     }

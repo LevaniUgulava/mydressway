@@ -26,7 +26,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::group(['middleware' => ['auth:sanctum', 'admin'], 'prefix' => '/admin'], function () {
+Route::group(['middleware' => ['auth:api', 'admin'], 'prefix' => '/admin'], function () {
     Route::group(['prefix' => '/userstatus'], function () {
         Route::get('/display', [UserStatusController::class, 'display']);
         Route::post('/create', [UserStatusController::class, 'store']);
@@ -39,6 +39,8 @@ Route::group(['middleware' => ['auth:sanctum', 'admin'], 'prefix' => '/admin'], 
         Route::post('/delete/{id}', [EligibleProductController::class, 'delete']);
     });
 });
+Route::group(['middleware' => 'auth:api'], function () {
 
-Route::get('/current/status', [UserStatusController::class, 'displayStatus'])->middleware('auth:sanctum');
-Route::get('/exlusive', [EligibleProductController::class, 'displayEligibleProduct'])->middleware('auth:sanctum');
+    Route::get('/current/status', [UserStatusController::class, 'displayStatus']);
+    Route::get('/exlusive', [EligibleProductController::class, 'displayEligibleProduct']);
+});

@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
- Route::group(['prefix' => 'admin/roles', 'middleware' => ['admin', 'auth:sanctum']], function () {
+ Route::group(['prefix' => 'admin/roles', 'middleware' => ['admin', 'auth:api']], function () {
      Route::get('/', [RolesController::class, 'display']);
      Route::post('/change/user/{user}/role/{role}', [RolesController::class, 'update']);
      Route::post('/remove/user/{user}/role/{role}', [RolesController::class, 'remove']);

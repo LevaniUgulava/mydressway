@@ -22,6 +22,8 @@ class PromocodeService
     {
         $user = Auth::user();
         $promocode = $request->input("promocode");
+        $type = $request->input("type");
+
 
         $check = $this->promocodeRepository->getbyName($promocode);
         if (!$check) {
@@ -31,6 +33,10 @@ class PromocodeService
         if ($check->expires_at && $check->expires_at < now()) {
             return response()->json('პრომოკოდის ვადა ამოიწურა', 400);
         }
+        if ($check->type !== $type) {
+            return response()->json('ვერა', 400);
+        }
+
         if ($check->usage_quantity !== null) {
             $this->calculateUsage($user, $check);
         }
@@ -45,7 +51,8 @@ class PromocodeService
         }
         $user->usertemp()->update([
             "promocode" => $promocode,
-            "total_price" => $new_price
+            "payment" =>  $type,
+            "promocode_price" => $new_price
         ]);
 
         return response()->json(true);

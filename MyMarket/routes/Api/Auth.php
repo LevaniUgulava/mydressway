@@ -25,17 +25,22 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 
-Route::get('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/admin/login', [AuthController::class, 'adminlogin'])->name('admin.login');
 Route::post('auth/facebook', [FacebookController::class, 'authenticate']);
 Route::post('google/callback', [GoogleController::class, 'callback']);
 Route::post('/email/verify', [AuthController::class, 'verify']);
 Route::post('/resend-verify', [AuthController::class, 'ResendVerification']);
-Route::group(["middleware" => "auth:sanctum"], function () {
+
+Route::post('/subscribe', [AuthController::class, 'subscribe']);
+
+Route::group(["middleware" => "auth:api"], function () {
+    Route::get('/me', [AuthController::class, 'userInfo']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/userstatuses', [AuthController::class, 'getuserstatus']);
     Route::post('/delete/acc', [AuthController::class, 'deleteAcc']);
     Route::post('/send-deactivation-email', [AuthController::class, 'SendDeactivationCode']);
     Route::post('/verify-deactivation-code', [AuthController::class, 'verifyDeactivationCode']);
 });
+Route::post('/refresh', [AuthController::class, 'refresh'])->middleware('throttle:30,1');

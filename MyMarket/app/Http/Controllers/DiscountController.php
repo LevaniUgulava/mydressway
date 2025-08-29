@@ -17,7 +17,8 @@ class DiscountController extends Controller
 
         if ($status && $status->id !== $user->userstatus_id) {
             $user->update([
-                'userstatus_id' => $status->id
+                'userstatus_id' => $status->id,
+                'userstatus_time' => now()
             ]);
         }
     }
