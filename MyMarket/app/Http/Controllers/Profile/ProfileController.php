@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Profile;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\ProductResource;
+use App\Jobs\SendPasswordVerificationEmail;
 use App\Models\Product;
 use App\Models\User;
 use App\Notifications\CustomVerifyEmail;
@@ -91,15 +92,16 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         $products = $user->manyproducts()->withAvg('rateproduct', 'rate')->get();
+        $userStatus = optional(optional($user)->userstatusinfo)->userstatus;
 
         $likedProductIds = $user ? $user->manyproducts()->pluck('product_id')->toArray() : [];
-        $products->transform(function ($product) use ($likedProductIds, $user) {
+        $products->transform(function ($product) use ($likedProductIds, $user, $userStatus) {
             $product->image_urls = $product->getMedia('default')->map(fn($media) => $media->getUrl());
             $product->isLiked = in_array($product->id, $likedProductIds);
 
             if ($user) {
-                $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $user->userstatus->id)->withPivot('discount')->first();
-                if ($isEligible && $user->userstatus->isActive()) {
+                $isEligible =  $product->eligibleStatuses()->wherePivot('userstatus_id', $userStatus->id)->withPivot('discount')->first();
+                if ($isEligible && $userStatus->isActive($user)) {
                     $product->discountstatus = [
                         'userstatus' => $user->userstatus,
                         'discount' => $isEligible->pivot->discount
@@ -127,14 +129,14 @@ class ProfileController extends Controller
                 "required",
                 "email",
                 "max:255",
-                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org)$/'
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
             ]
         ]);
 
         $user = User::where("email", $request->email)->first();
 
         if ($user) {
-            $otp = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $otp = str_pad(mt_rand(0, 999999), 6, '0', STR_PAD_LEFT);
 
             DB::table('password_reset_tokens')->updateOrInsert(
                 ['email' => $user->email],
@@ -143,7 +145,8 @@ class ProfileController extends Controller
                     'created_at' => now()
                 ]
             );
-            $user->notify(new ForgetPassword($otp));
+            // $user->notify(new ForgetPassword($otp));
+            dispatch(new SendPasswordVerificationEmail($otp, $user));
             return response()->json([
                 "message" => [
                     "success" => true,
@@ -162,7 +165,7 @@ class ProfileController extends Controller
     {
         $request->validate([
             'email' => 'required|email',
-            'otp' => 'required|numeric|digits:8',
+            'otp' => 'required|numeric|digits:6',
         ]);
 
         $user = User::where('email', $request->email)->first();
@@ -207,7 +210,7 @@ class ProfileController extends Controller
                 "required",
                 "email",
                 "max:255",
-                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.(com|net|org)$/'
+                'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/',
             ]
         ]);
 

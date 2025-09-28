@@ -1,10 +1,6 @@
 <?php
 
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CommentController;
-use App\Http\Controllers\MailController;
-use App\Http\Controllers\OrderController;
-use App\Http\Controllers\ProductController;
+use App\Http\Controllers\SendGridController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,3 +20,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['middleware' => ['auth:api']], function () {});
+
+
+Route::get('/templates', [SendGridController::class, "getAllTemplate"]);
+Route::get('/template/{id}', [SendGridController::class, "getOneTemplate"]);
+Route::post('/template/{templateId}/version/{versionId}', [SendGridController::class, "Activate"]);
+Route::post('/addtemplate', [SendGridController::class, "AddTemplate"]);
+Route::post('/sendgrid/addContact', [SendGridController::class, "addContact"]);

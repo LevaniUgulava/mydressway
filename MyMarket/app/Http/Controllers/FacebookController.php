@@ -36,7 +36,6 @@ class FacebookController extends Controller
             $user->surname = $fbUser->user['last_name'];
             $user->email = $fbUser->user['email'];
             $user->facebook_id = $fbUser->id;
-            $user->userstatus_id = 1;
             $user->email_verified_at = now();
             $user->save();
             $user->assignRole('default');

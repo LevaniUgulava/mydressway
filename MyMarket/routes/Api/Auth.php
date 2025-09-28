@@ -3,10 +3,8 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\FacebookController;
 use App\Http\Controllers\GoogleController;
-use App\Models\User;
-use Google\Service\Compute\Router;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,12 +29,13 @@ Route::post('/admin/login', [AuthController::class, 'adminlogin'])->name('admin.
 Route::post('auth/facebook', [FacebookController::class, 'authenticate']);
 Route::post('google/callback', [GoogleController::class, 'callback']);
 Route::post('/email/verify', [AuthController::class, 'verify']);
-Route::post('/resend-verify', [AuthController::class, 'ResendVerification']);
+Route::post('/resend-verify', [AuthController::class, 'resendVerification']);
 
 Route::post('/subscribe', [AuthController::class, 'subscribe']);
 
 Route::group(["middleware" => "auth:api"], function () {
     Route::get('/me', [AuthController::class, 'userInfo']);
+    Route::get('/checkoutinfo', [AuthController::class, 'checkoutInfo']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/userstatuses', [AuthController::class, 'getuserstatus']);
     Route::post('/delete/acc', [AuthController::class, 'deleteAcc']);

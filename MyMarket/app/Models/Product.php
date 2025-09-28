@@ -5,20 +5,33 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
-use Illuminate\Support\Str;
 
 // #[ObservedBy([ProductLoggerObserver::class])]
 
 class Product extends Model implements HasMedia
 {
-    use HasFactory, InteractsWithMedia;
+    use HasFactory, InteractsWithMedia, SoftDeletes;
     protected $guarded = [];
     protected $casts = [
         'size' => 'array',
     ];
+    protected $appends = ['images'];
+
+    public function getImagesAttribute()
+    {
+        return $this->getMedia('default')->map(
+            function ($media) {
+                unset($this->media);
+                return url('storage/' . $media->id . '/' . $media->file_name);
+            }
+
+        );
+    }
+
 
 
 
@@ -149,18 +162,6 @@ class Product extends Model implements HasMedia
         return $this->belongsTo(Maincategory::class);
     }
 
-
-
-    public static function boot()
-    {
-        parent::boot();
-        static::saving(function ($product) {
-            if ($product->isDirty('name')) {
-                $product->slug = Str::slug($product->name);
-            }
-        });
-    }
-
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -221,5 +222,14 @@ class Product extends Model implements HasMedia
     {
         return $this->belongsToMany(Userstatus::class, 'eligibleproducts', 'product_id', 'userstatus_id')
             ->withPivot('userstatus_id');
+    }
+
+    public function spu()
+    {
+        return $this->belongsTo(Spu::class);
+    }
+    public function usertemp()
+    {
+        return $this->hasMany(Usertemp::class);
     }
 }

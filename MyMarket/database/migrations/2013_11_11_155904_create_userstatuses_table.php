@@ -17,6 +17,7 @@ return new class extends Migration
             $table->decimal('toachieve', 10, 2);
             $table->integer('time');
             $table->string('expansion');
+            $table->decimal('limit', 10, 2);
             $table->timestamps();
         });
     }

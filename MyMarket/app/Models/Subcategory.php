@@ -9,6 +9,7 @@ class Subcategory extends Model
 {
     use HasFactory;
     protected $guarded = [];
+    protected $hidden = ['pivot'];
 
     public function Categories()
     {
@@ -17,10 +18,5 @@ class Subcategory extends Model
     public function Products()
     {
         return $this->hasMany(Product::class);
-    }
-
-    public function Maincategory()
-    {
-        return $this->belongsTo(Maincategory::class);
     }
 }

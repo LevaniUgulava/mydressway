@@ -19,8 +19,13 @@ class TemporaryOrder extends Model
         "product_id",
         "size",
         "retail_price",
-        "total_price"
+        "total_price",
+        "isOriginal"
     ];
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 
     public function user()
     {

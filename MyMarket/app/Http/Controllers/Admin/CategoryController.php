@@ -70,26 +70,45 @@ class CategoryController extends Controller
 
     public function displaycategory()
     {
-        $categories = Category::with(['Maincategories' => function ($query) {
-            $query->select('maincategories.id');
-        }])->select("id", "ka_name", "en_name")->get();
+        $categories = Category::select('categories.id', 'categories.ka_name', 'categories.en_name')
+            ->withCount('products')
+            ->with([
+                'maincategories' => fn($q) => $q->select('maincategories.id'),
+                'subcategories'  => fn($q) => $q->select(
+                    'subcategories.id',
+                    'subcategories.ka_name',
+                ),
+            ])
+            ->get()
+            ->map(function ($cat) {
+                $cat->setRelation('subcategories', $cat->subcategories->take(4));
+                return $cat;
+            });
 
         $mappedcategory = $categories->map(function ($category) {
             return [
-                "id" => $category->id,
-                "ka_name" => $category->ka_name,
-                "en_name" => $category->en_name,
-                "maincategory_id" => $category->maincategories->pluck("id")->toArray(),
+                'id'              => $category->id,
+                'ka_name'         => $category->ka_name,
+                'en_name'         => $category->en_name,
+                'maincategory_id' => $category->maincategories->pluck('id')->toArray(),
                 "image_url" => $category->getMedia('category')->map(function ($media) {
                     return url('storage/' . $media->id . '/' . $media->file_name);
                 }),
+                'subcategories'   => $category->subcategories
+                    ->map(fn($s) => [
+                        'id'      => $s->id,
+                        'ka_name' => $s->ka_name,
+                    ])
+                    ->values()
+                    ->toArray(),
 
-
+                'count'           => $category->products_count,
             ];
-        });
+        })->values();
 
         return $mappedcategory;
     }
+
     public function displayadmincategory()
     {
         $categories = Category::with(['Subcategories' => function ($query) {
@@ -291,5 +310,22 @@ class CategoryController extends Controller
             ->pluck('size');
 
         return response()->json(['clothsize' => $clothsize, "shoessize" => $shoessize]);
+    }
+
+    public function allCategory()
+    {
+        $categories = Maincategory::select('id', 'ka_name')
+            ->with([
+                'Categories' => function ($query) {
+                    $query->select('categories.id', 'categories.ka_name')
+                        ->with([
+                            'Subcategories' => function ($subQuery) {
+                                $subQuery->select('subcategories.id', 'subcategories.ka_name');
+                            }
+                        ]);
+                }
+            ])
+            ->get();
+        return response()->json($categories);
     }
 }

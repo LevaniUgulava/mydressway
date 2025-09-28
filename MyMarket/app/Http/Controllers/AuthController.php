@@ -2,24 +2,27 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ProductHelper;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
+use App\Jobs\DeleteAccountNotification;
+use App\Jobs\SendVerificationEmail;
 use App\Models\Deactivate;
 use App\Models\Subscriber;
 use App\Models\User;
 use App\Models\Userstatus;
 use App\Notifications\CustomVerifyEmail;
-use App\Notifications\DeleteAccountNotification;
 use App\Notifications\RegisterNotification;
 use App\Services\JwtService;
 use App\Services\RefreshToken;
+use App\Services\SendGridService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request)
+    public function register(RegisterRequest $request, SendGridService $sg, ProductHelper $productHelper)
     {
         if (User::where('email', $request->email)->exists()) {
             return response()->json([
@@ -33,35 +36,51 @@ class AuthController extends Controller
             'surname' => $request->surname,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'userstatus_id' => 1,
+            'privacy_policy_agreed' => (bool) $request->privacy_policy_agreed,
+            'marketing_opt_in' => $request->boolean('marketing_opt_in'),
         ]);
-
+        $status = Userstatus::firstWhere('toachieve', 0);
+        $user->userstatusinfo()->create([
+            'user_id' => $user->id,
+            'userstatus_id' => $status->id,
+            'left' => $status->limit,
+            'userstatus_time' => now(),
+            'end_time' => $productHelper->addDuration(now(), $status->expansion, $status->time)
+        ]);
         $user->assignRole('default');
         $roles = $user->getRoleNames();
-
+        $this->sendVerificationForUser($user);
+        if ($user->marketing_opt_in) {
+            $sg->addContact($user->email, 'register');
+        }
         return response()->json([
             'message' => 'Registered',
             'id' => $user->id,
             'roles' => $roles
         ], 200);
     }
-    public function ResendVerification(Request $request)
+    public function resendVerification(Request $request)
     {
+        $request->validate(['email' => 'required|email']);
+        $user = User::where('email', $request->email)->first();
 
-        $user = User::where("email", $request->email)->first();
         if (!$user) {
-            return response()->json(["success" => false], 401);
+            return response()->json(['success' => false], 401);
         }
-        $token = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
-        $check = $user->updateOrCreate(
-            ['id' => $user->id],
-            ['confirmation_token' => $token]
-        );
-        if ($check) {
-            $user->notify(new CustomVerifyEmail($token));
-            return response()->json(["success" => true], 200);
-        }
-        return response()->json(["success" => false], 500);
+
+        $this->sendVerificationForUser($user);
+
+        return response()->json(['success' => true], 200);
+    }
+
+
+    private function sendVerificationForUser(User $user): void
+    {
+        $token = (string) random_int(100000, 999999);
+
+        $user->update(['confirmation_token' => $token]);
+
+        dispatch(new SendVerificationEmail($user, $token));
     }
     public function login(LoginRequest $request, JwtService $jwt, RefreshToken $refresh)
     {
@@ -122,6 +141,15 @@ class AuthController extends Controller
                 'platform' => $platform
             ],
             'role' => $role
+        ]);
+    }
+    public function checkoutInfo()
+    {
+        $user = Auth::user();
+        $orderCount = $user->usertemp?->temporders->count() ?? 0;
+        return response()->json([
+            'checkout_in_progress' => $orderCount > 0 || false,
+            'cart_items' => $orderCount
         ]);
     }
 
@@ -216,13 +244,14 @@ class AuthController extends Controller
     public function getuserstatus()
     {
         $user = Auth::user();
-        $userstatus = $user->userstatus;
-        $statuses = Userstatus::orderby('toachieve')->get();
+        $userstatus = $user->userstatusinfo;
+        $statuses = Userstatus::orderby('toachieve')->get(['id', 'name', 'toachieve', 'limit']);
 
         return response()->json([
-            'status' => $userstatus,
+            'status' => $userstatus->userstatus,
             'user' => $user->total_spent,
-            'statuses' => $statuses
+            'statuses' => $statuses,
+            'limit' => $userstatus->left
 
         ]);
     }
@@ -246,10 +275,10 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        $token = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+        $token = str_pad(mt_rand(100000, 999999), 6, '0', STR_PAD_LEFT);
 
         while (Deactivate::where('token', $token)->exists()) {
-            $token = str_pad(mt_rand(0, 99999999), 8, '0', STR_PAD_LEFT);
+            $token = str_pad(mt_rand(100000, 999999), 6, '0', STR_PAD_LEFT);
         }
 
         $deactivate = Deactivate::updateOrCreate(
@@ -262,7 +291,7 @@ class AuthController extends Controller
 
 
         if ($deactivate) {
-            $user->notify(new DeleteAccountNotification($token));
+            dispatch(new DeleteAccountNotification($user, $token));
 
             return response()->json(['success' => true, 'message' => 'Deactivation email sent.'], 200);
         }
@@ -277,6 +306,7 @@ class AuthController extends Controller
         $deactivationToken = Deactivate::where('token', $token)
             ->where('user_id', $user->id)
             ->where('expires_at', '>', now())
+            ->where('used', false)
             ->first();
 
         if ($deactivationToken) {

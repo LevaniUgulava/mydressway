@@ -2,20 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\Status;
-use App\Helpers\EnumHelper;
+
 use App\Models\Address;
 use App\Models\Order;
 use App\Models\Product;
-use App\Notifications\CustomVerifyEmail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Validation\Rule;
-use PDO;
-use Symfony\Component\CssSelector\Node\FunctionNode;
+
 
 class OrderController extends Controller
 {
@@ -25,7 +19,7 @@ class OrderController extends Controller
         $user = Auth::user();
         $orders = $user->orders()->with(['products', 'address'])->get()->map(function ($order) {
             $order->products = $order->products->map(function ($product) {
-                $productModel = Product::find($product->id);
+                $productModel = Product::withTrashed()->find($product->id);
 
                 $product->image_urls = $productModel->getMedia('default')->map(function ($media) {
                     return url('storage/' . $media->id . '/' . $media->file_name);

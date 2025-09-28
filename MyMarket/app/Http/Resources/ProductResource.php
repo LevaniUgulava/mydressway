@@ -10,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Auth;
 use Ramsey\Uuid\Type\Decimal;
 
+use function PHPUnit\Framework\returnSelf;
+
 class ProductResource extends JsonResource
 {
 
@@ -29,6 +31,7 @@ class ProductResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'sku' => $this->sku,
             'slug' => $this->slug,
             'name' => $this->name,
             'description' => $this->description,
@@ -45,13 +48,10 @@ class ProductResource extends JsonResource
             'image_urls' => $this->getMedia('default')->map(function ($media) {
                 return url('storage/' . $media->id . '/' . $media->file_name);
             }),
-            'active' => $this->active,
+            'brand' => $this->brands->first()?->name,
             'isLiked' => $this->isLiked ?? false,
-            // 'isRated' => $this->isRated ?? false,
-            // 'Rate' => number_format((float)$this->rateproduct_avg_rate, 1),
-            // 'MyRate' => (float)$this->MyRate,
+            'inCartQuantity' => $this->inCartQuantity ?? 0,
             "isNew" => $productService->checkNew($this->created_at)
-
         ];
     }
 }

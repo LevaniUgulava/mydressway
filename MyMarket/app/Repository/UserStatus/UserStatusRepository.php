@@ -72,7 +72,7 @@ class UserStatusRepository implements UserStatusRepositoryInterface
     public function displayStatus()
     {
         $user = Auth::user();
-        $status = $user->userstatus()->select('name', "time")->first();
+        $status = $user->userstatusinfo->first();
         return $status;
     }
 }

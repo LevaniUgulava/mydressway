@@ -3,6 +3,7 @@
 namespace App\Repository\EligibleProduct;
 
 use App\Helpers\ProductHelper;
+use App\Http\Resources\ProductResource;
 use App\Models\Eligibleproduct;
 use App\Models\Userstatus;
 
@@ -17,23 +18,34 @@ class EligibleProductRepository implements EligibleProductRepositoryInterface
     public function display($id)
     {
         try {
-            $userStatus = Userstatus::with('eligibleProducts')->findorfail($id);
-            if (!$userStatus) {
-                return response()->json([
-                    'message' => "User status not found"
-                ], 404);
-            }
+            $userStatus = Userstatus::with([
+                'eligibleProducts' => fn($q) =>
+                $q->select('products.id', 'products.name', 'products.price', 'products.discountprice', 'products.discount as product_discount', 'eligibleproducts.discount as status_discount')
+                    ->with('media')
+            ])->findOrFail($id);
 
+            $userStatus->eligibleProducts->transform(function ($p) {
+                $p->image_urls = $p->getMedia('default')->map(function ($media) {
+                    return url('storage/' . $media->id . '/' . $media->file_name);
+                })->toArray();
+                unset($p->media);
+                unset($p->pivot);
+
+
+                return $p;
+            });
+
+
+
+            return response()->json(['status' => $userStatus]);
+        } catch (\Throwable $e) {
             return response()->json([
-                'status' => $userStatus,
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => "error to display",
-                'error' => $e->getMessage()
-            ]);
+                'message' => 'error to display',
+                'error'   => $e->getMessage(),
+            ], 500);
         }
     }
+
 
 
     public function create($statusid, array $ids, $discount)
@@ -86,8 +98,8 @@ class EligibleProductRepository implements EligibleProductRepositoryInterface
     public function displayEligibleProduct($user)
     {
         if ($user) {
-            $status = $user->userstatus()->first();
-            if ($status->isActive()) {
+            $status = $user->userstatusinfo->userstatus;
+            if ($status->isActive($user)) {
                 $products = $status->eligibleProducts()
                     ->select(
                         "products.id",
@@ -96,23 +108,16 @@ class EligibleProductRepository implements EligibleProductRepositoryInterface
                         "products.price",
                         "products.discount",
                         "products.discountprice",
-                        "products.active"
                     )
-                    ->withAvg('rateproduct', 'rate')
-                    ->where("products.active", 1)
                     ->get();
-                $products = $products->map(function ($product) {
-                    $product->Rate = number_format((float)$product->rateproduct_avg_rate, 1);
-                    unset($product->rateproduct_avg_rate);
-                    return $product;
-                });
+
 
 
                 $this->productHelper->transform($products, $user, null, false);
 
                 if ($products) {
                     return [
-                        'products' => $products
+                        'products' => ProductResource::collection($products)
                     ];
                 }
             } else {

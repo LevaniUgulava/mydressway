@@ -17,7 +17,8 @@ class UserStatusSeeder extends Seeder
             "name" => "სტატუსის გარეშე",
             "toachieve" => 100,
             "time" => 2,
-            "expansion" => "month"
+            "expansion" => "month",
+            "limit" => 500
         ]);
     }
 }

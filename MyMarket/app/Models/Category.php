@@ -12,6 +12,8 @@ class Category extends Model implements HasMedia
     use HasFactory, InteractsWithMedia;
 
     protected $guarded = [];
+    protected $hidden = ['pivot'];
+
 
     public function Subcategories()
     {

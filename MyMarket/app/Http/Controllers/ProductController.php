@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Models\User;
 use App\Notifications\DiscountNotification;
 use App\Repository\Product\ProductRepositoryInterface;
+use App\Services\ProductService;
+use App\Services\SpuService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -85,11 +87,11 @@ class ProductController extends Controller
         return response()->json(['message' => 'yes']);
     }
 
-    public function displaybyid($id)
+    public function displaybyid($id, ProductService $service)
     {
         $user = auth('api')->user();
-        $product = $this->productRepository->displaybyid($id, $user);
-        return new ProductResource($product);
+        $product = $this->productRepository->displaybyid($id, $user, $service);
+        return $product;
     }
 
     public function similarproducts($id)
@@ -99,10 +101,10 @@ class ProductController extends Controller
         return ProductResource::collection($products);
     }
 
-    public function create(Request $request)
+    public function create(Request $request, SpuService $service)
     {
         try {
-            $check = $this->productRepository->create($request);
+            $check = $this->productRepository->create($request, $service);
 
             if (!$check) {
                 return response()->json([

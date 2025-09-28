@@ -50,3 +50,4 @@ Route::get('/sizes', [CategoryController::class, 'displaysize']);
 Route::get('/maincategory/{id}', [CategoryController::class, 'Maincategorybyid']);
 Route::get('/category/{id}', [CategoryController::class, 'categorybyid']);
 Route::get('/subcategory/{id}', [CategoryController::class, 'subcategorybyid']);
+Route::get('/allCategory', [CategoryController::class, 'allCategory']);

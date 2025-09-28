@@ -9,6 +9,8 @@ use App\Repository\Brand\BrandRepository;
 use App\Repository\Brand\BrandRepositoryInterface;
 use App\Repository\EligibleProduct\EligibleProductRepository;
 use App\Repository\EligibleProduct\EligibleProductRepositoryInterface;
+use App\Repository\Mail\SendGridRepository;
+use App\Repository\Mail\SendGridRepositoryInterface;
 use App\Repository\Product\ProductRepository;
 use App\Repository\Product\ProductRepositoryInterface;
 use App\Repository\Promocode\PromocodeRepository;
@@ -37,6 +39,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(BrandRepositoryInterface::class, BrandRepository::class);
         $this->app->singleton(SearchRepositoryInterface::class, SearchRepository::class);
         $this->app->singleton(PromocodeRepositoryInterface::class, PromocodeRepository::class);
+        $this->app->singleton(SendGridRepositoryInterface::class, SendGridRepository::class);
     }
 
     /**

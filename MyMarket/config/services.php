@@ -40,6 +40,11 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI'),
     ],
+    'sendgrid' => [
+        'key' => env('SENDGRID_API_KEY'),
+        'from' => env('SENDGRID_FROM_EMAIL'),
+        'from_name' => env('SENDGRID_FROM_NAME'),
+    ],
 
 
 ];

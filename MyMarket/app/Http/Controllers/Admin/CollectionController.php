@@ -82,13 +82,14 @@ class CollectionController extends Controller
             ->when($sizes, fn($query) => $query->size($sizes))
             ->when($colors, fn($query) => $query->color($colors))
             ->when($brands, fn($query) => $query->brand($brands))
-            ->where('active', 1)
             ->paginate(16);
 
 
         $this->productHelper->transform($products, $user);
 
-
+        $media_urls = $collection->getMedia('collection')->map(function ($media) {
+            return url('storage/' . $media->id . '/' . $media->file_name);
+        });
 
         return response()->json([
             'collection' => [
@@ -96,6 +97,7 @@ class CollectionController extends Controller
                 'title' => $collection->title,
                 'description' => $collection->description,
                 'discount' => $collection->discount,
+                "media_url" =>$media_urls[0],
                 'created_at' => $collection->created_at,
                 'updated_at' => $collection->updated_at,
                 'products' => ProductResource::collection($products, $user),

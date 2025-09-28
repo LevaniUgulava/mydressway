@@ -31,7 +31,7 @@ class ProductService
     }
     public function getSizeData($product)
     {
-        if ($product->clothsize->isNotEmpty()) {
+        if ($product->clothsize && $product->clothsize->isNotEmpty()) {
             return $product->clothsize->map(function ($size) {
                 return [
                     'size' => $size->size,
@@ -45,7 +45,7 @@ class ProductService
                 ];
             });
         }
-        if ($product->shoesize->isNotEmpty()) {
+        if ($product->shoesize && $product->shoesize->isNotEmpty()) {
             return $product->shoesize->map(function ($size) {
                 return [
                     'size' => $size->size,

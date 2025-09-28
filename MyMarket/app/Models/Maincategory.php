@@ -11,10 +11,6 @@ class Maincategory extends Model
 
     protected $guarded = [];
 
-    public function Subcategories()
-    {
-        return $this->hasMany(Subcategory::class);
-    }
     public function Categories()
     {
         return $this->belongsToMany(Category::class, "maincategory_category");

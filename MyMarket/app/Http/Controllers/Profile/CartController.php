@@ -76,7 +76,11 @@ class CartController extends Controller
         $quantity = $request->quantity ?? 1;
         $size =  $request->size;
         $color =  $request->color;
-        $totalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $quantity;
+        $isOriginal = $request->isOriginal;
+
+        $totalPrice = $isOriginal ? $product->price * $quantity : $user->getPriceByStatus($product, $product->price, $product->discountprice) * $quantity;
+        $retail_price = $isOriginal ? $product->price : $user->getPriceByStatus($product, $product->price, $product->discountprice);
+
         if ($cartItem) {
             return response()->json([
                 'message' => 'პროდუქტი კალათაში დამატებულია'
@@ -87,11 +91,13 @@ class CartController extends Controller
                 'quantity' => $quantity,
                 'size' => $size,
                 "color" => $color,
-                'retail_price' => $user->getPriceByStatus($product, $product->price, $product->discountprice),
+                'isOriginal' => $isOriginal,
+                'retail_price' => $retail_price,
                 'total_price' => $totalPrice
             ]);
             return response()->json([
-                'message' => 'პროდუქტი კალათაში დაემტა'
+                'message' => 'პროდუქტი კალათაში დაემტა',
+                'id' => $cart->products()->first()->pivot->id
             ]);
         }
     }
@@ -146,7 +152,6 @@ class CartController extends Controller
                 return url('storage/' . $media->id . '/' . $media->file_name);
             });
 
-            $product->price = $user->getPriceByStatus($productModel, $product->price, $product->discountprice);
 
             $product->size = $this->productService->getSizeData($product);
 
@@ -165,6 +170,68 @@ class CartController extends Controller
         $cart->save();
 
         return response()->json(["products" => $products, 'totalPrice' => $totalPrice]);
+    }
+
+    public function quickUpdate(Request $request, ProductService $productService)
+    {
+        $user = Auth::user();
+        $product_id = $request->id;
+        $size = $request->size;
+        $color = $request->color;
+        $cart = $user->cart;
+        $action = $request->action;
+        $entity = $cart
+            ->products()
+            ->wherePivot('color', $color)
+            ->wherePivot('size', $size)
+            ->wherePivot('product_id', $product_id)
+            ->first();
+        if (!$entity) {
+            return response()->json(['error' => 'Product not found in user orders'], 404);
+        }
+        $product = Product::find($entity->id);
+        if (!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+        $fullquantity = $productService->getQuantity($product, $entity->pivot->size, $entity->pivot->color);
+
+        $currentquantity = $entity->pivot->quantity;
+        if ($action === 'increment' && $fullquantity > $currentquantity) {
+            $currentquantity++;
+        } elseif ($action === 'decrement' && $currentquantity > 1) {
+            $currentquantity--;
+        } elseif ($action === 'delete' && $currentquantity === 1) {
+            $deleted = $cart->products()
+                ->detach($product->id);
+            if ($deleted) {
+                return response()->json('Deleted Successfully');
+            }
+            return response()->json(['error' => 'Something went wrong'], 400);
+        } else {
+            return response()->json(['error' => 'Invalid action or quantity'], 400);
+        }
+        $newTotalPrice = $user->getPriceByStatus($product, $product->price, $product->discountprice) * $currentquantity;
+        $updated = $cart->products()
+            ->updateExistingPivot($product->id, [
+                'quantity' => $currentquantity,
+                'total_price' => $newTotalPrice
+            ]);
+
+        if ($updated) {
+            $totalPrice = $cart->products->map(function ($product) {
+                return $product->pivot->total_price;
+            })->sum();
+
+            $cart->update(['cart_total_price' => $totalPrice]);
+            return response()->json([
+                "quantity" => $currentquantity,
+                'total_price' => $newTotalPrice,
+                "cart_total_price" => $cart->cart_total_price
+            ]);
+        } else {
+            return response()->json(['error' => 'Failed to update quantity'], 500);
+        }
     }
 
 

@@ -26,6 +26,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/addcart/{product}', [CartController::class, 'cart']);
     Route::get('/mycart', [CartController::class, 'getcart']);
     Route::post('/quantity/{id}/{action}', [CartController::class, 'updatequantity']);
+    Route::post('/quick_update', [CartController::class, 'quickUpdate']);
     Route::patch('/size/{id}', [CartController::class, 'changeSize']);
     Route::patch('/color/{id}', [CartController::class, 'changeColor']);
     Route::post('/delete/{id}/cart', [CartController::class, 'deletecart']);
